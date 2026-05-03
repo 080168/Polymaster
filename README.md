@@ -1,0 +1,2 @@
+# Polymaster
+Polymarket trading bot
