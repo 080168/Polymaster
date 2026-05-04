@@ -268,13 +268,18 @@ const HIST_KEY = 'pm_hist';
 
 const DEFAULT_PROMPT = `이 Polymarket 마켓 스크린샷을 분석해주세요.
 
+**중요: 웹 검색으로 실시간 데이터를 먼저 수집하세요.**
+- 선수명이 보이면 → tennis.one, tennisabstract.com, atptour.com 검색
+- 검색할 정보: 최근 5경기 전적, 서피스 승률, H2H, 랭킹, 부상 여부
+
 다음 항목을 한국어로 분석해주세요:
 
 1. **마켓 개요** — 마켓명, 현재 Yes/No 가격, 마감일
-2. **EV 계산** — 현재 가격 기준 기대값(EV) 계산. Yes EV와 No EV 모두 계산
-3. **추천 방향** — YES / NO / 패스 중 하나와 이유
-4. **켈리 포지션 사이즈** — 켈리 기준 권장 비중 (예: 뱅크롤의 X%)
-5. **리스크 메모** — 주의사항 1~2줄
+2. **실시간 데이터** — 검색으로 찾은 선수 최근 폼, H2H, 서피스 통계
+3. **EV 계산** — 실제 확률 추정 vs 마켓 가격 비교. Yes EV / No EV
+4. **추천 방향** — YES / NO / 패스 + 핵심 근거
+5. **켈리 포지션 사이즈** — 권장 베팅 비중 (뱅크롤의 X%)
+6. **리스크 메모** — 주의사항 1~2줄
 
 형식: 간결하게, 핵심만, 숫자 중심으로`;
 
@@ -365,7 +370,8 @@ async function analyze() {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 2000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
           content: [
@@ -387,7 +393,11 @@ async function analyze() {
     }
 
     const data = await resp.json();
-    const text = data.content?.[0]?.text || '분석 결과를 가져올 수 없습니다.';
+    // 웹 검색 포함 멀티블록 응답 파싱
+    const text = data.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n') || '분석 결과를 가져올 수 없습니다.';
 
     showResult(text);
     saveHistory(text);
