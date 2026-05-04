@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Polymaster">
+<meta name="theme-color" content="#03070d">
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;:&quot;Polymaster&quot;,
+  &quot;short_name&quot;:&quot;Polymaster&quot;,
+  &quot;description&quot;:&quot;Polymarket Analysis Tool&quot;,
+  &quot;start_url&quot;:&quot;.&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;%2303070d&quot;,
+  &quot;theme_color&quot;:&quot;%2303070d&quot;,
+  &quot;orientation&quot;:&quot;portrait&quot;,
+  &quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2303070d'/%3E%3Ctext x='256' y='340' font-family='Arial Black' font-size='280' text-anchor='middle' fill='%2300b4d8'%3EP%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;512x512&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any maskable&quot;}]
+}">
+<!-- Apple Touch Icon (inline SVG → base64) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%2303070d'/%3E%3Ctext x='256' y='340' font-family='Arial Black' font-size='280' text-anchor='middle' fill='%2300b4d8'%3EP%3C/text%3E%3C/svg%3E">
+<title>Polymaster</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=Bebas+Neue&display=swap');
+:root{
+  --bg:#03070d;--s1:#070f1a;--s2:#0c1825;--bd:#14273a;--bd2:#1e3a56;
+  --tx:#a8c8e8;--mu:#3a5a78;--br:#d4eeff;
+  --ac:#00b4d8;--gr:#00e5a0;--rd:#ff3d6b;--yw:#ffc23a;
+  --fn:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100dvh;overflow-x:hidden}
+
+/* ── HEADER ── */
+.hdr{
+  padding:16px;
+  background:linear-gradient(180deg,var(--s1) 0%,transparent 100%);
+  border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;
+  background:linear-gradient(135deg,var(--ac),var(--gr));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ver{font-size:9px;color:var(--mu);letter-spacing:2px}
+
+/* ── KEY AREA ── */
+.key-bar{
+  margin:12px;padding:10px 12px;
+  background:var(--s1);border:1px solid var(--bd);border-radius:8px;
+  display:flex;gap:8px;align-items:center;
+}
+.key-bar input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--br);font-family:var(--fn);font-size:11px;
+  letter-spacing:1px;
+}
+.key-bar input::placeholder{color:var(--mu)}
+.key-bar button{
+  background:var(--bd2);border:none;border-radius:5px;
+  color:var(--ac);font-family:var(--fn);font-size:10px;
+  padding:5px 10px;cursor:pointer;white-space:nowrap;
+  transition:background .2s;
+}
+.key-bar button:active{background:var(--ac);color:var(--bg)}
+.key-st{font-size:9px;color:var(--mu);text-align:center;margin:-6px 14px 6px}
+
+/* ── UPLOAD ZONE ── */
+.upload-wrap{margin:0 12px 12px}
+.drop-zone{
+  border:1.5px dashed var(--bd2);border-radius:10px;
+  padding:24px 16px;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;
+  position:relative;overflow:hidden;
+}
+.drop-zone.has-img{border-style:solid;border-color:var(--ac);padding:0}
+.drop-zone:active{background:var(--s1)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop-icon{font-size:28px;margin-bottom:8px}
+.drop-txt{font-size:11px;color:var(--mu);line-height:1.8}
+.drop-txt b{color:var(--ac)}
+.preview-img{width:100%;border-radius:8px;display:block}
+
+/* ── PROMPT ── */
+.prompt-wrap{margin:0 12px 12px}
+.prompt-wrap textarea{
+  width:100%;background:var(--s1);border:1px solid var(--bd);border-radius:8px;
+  color:var(--tx);font-family:var(--fn);font-size:11px;line-height:1.7;
+  padding:10px 12px;resize:none;outline:none;
+  transition:border-color .2s;
+}
+.prompt-wrap textarea:focus{border-color:var(--bd2)}
+
+/* ── ANALYZE BTN ── */
+.btn-analyze{
+  display:block;width:calc(100% - 24px);margin:0 12px 12px;
+  background:linear-gradient(135deg,var(--ac),#0077b6);
+  border:none;border-radius:8px;padding:14px;
+  color:#fff;font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:3px;cursor:pointer;
+  transition:opacity .2s,transform .1s;
+}
+.btn-analyze:active{opacity:.85;transform:scale(.99)}
+.btn-analyze:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── LOADING ── */
+.loading{
+  margin:0 12px 12px;padding:16px;
+  background:var(--s1);border:1px solid var(--bd);border-radius:8px;
+  text-align:center;display:none;
+}
+.loading.show{display:block}
+.spin{
+  width:24px;height:24px;border:2px solid var(--bd2);
+  border-top-color:var(--ac);border-radius:50%;
+  animation:spin .8s linear infinite;margin:0 auto 8px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{font-size:10px;color:var(--mu);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ── RESULT ── */
+.result{
+  margin:0 12px 12px;padding:14px;
+  background:var(--s1);border:1px solid var(--bd);border-radius:10px;
+  display:none;
+}
+.result.show{display:block}
+.result-hdr{
+  font-size:9px;color:var(--mu);letter-spacing:2px;
+  margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.result-body{font-size:12px;line-height:1.9;color:var(--tx);white-space:pre-wrap;word-break:break-word}
+
+/* EV badges */
+.ev-pos{color:var(--gr);font-weight:600}
+.ev-neg{color:var(--rd);font-weight:600}
+.ev-neu{color:var(--yw);font-weight:600}
+
+/* copy btn */
+.copy-btn{
+  background:var(--bd);border:none;border-radius:4px;
+  color:var(--mu);font-family:var(--fn);font-size:9px;
+  padding:3px 8px;cursor:pointer;transition:color .2s;
+}
+.copy-btn:active{color:var(--gr)}
+
+/* ── HISTORY ── */
+.hist-wrap{margin:0 12px 16px}
+.hist-hdr{
+  font-size:9px;color:var(--mu);letter-spacing:2px;
+  margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;
+}
+.hist-clear{
+  background:none;border:none;color:var(--rd);font-family:var(--fn);
+  font-size:9px;cursor:pointer;opacity:.6;
+}
+.hist-clear:active{opacity:1}
+.hist-list{display:flex;flex-direction:column;gap:6px}
+.hist-item{
+  background:var(--s1);border:1px solid var(--bd);border-radius:8px;
+  padding:10px 12px;cursor:pointer;transition:border-color .2s;
+}
+.hist-item:active{border-color:var(--bd2)}
+.hist-item-top{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;
+}
+.hist-item-time{font-size:9px;color:var(--mu)}
+.hist-item-ev{font-size:10px;font-weight:600}
+.hist-item-txt{font-size:10px;color:var(--tx);opacity:.8;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-60px);
+  background:var(--s2);border:1px solid var(--ac);border-radius:20px;
+  color:var(--ac);font-family:var(--fn);font-size:10px;
+  padding:7px 16px;transition:transform .3s;z-index:999;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── SECTION LABEL ── */
+.sec-label{
+  font-size:9px;color:var(--mu);letter-spacing:2px;
+  margin:0 12px 6px;
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="logo">POLYMASTER</div>
+    <div class="ver">POLYMARKET ANALYSIS TOOL v2.0</div>
+  </div>
+  <div style="font-size:10px;color:var(--mu);text-align:right;line-height:1.8">
+    <span id="key-dot" style="color:var(--rd)">●</span> API<br>
+    <span id="hist-count" style="color:var(--ac)">0</span> 기록
+  </div>
+</div>
+
+<!-- API KEY -->
+<div class="key-bar">
+  <input type="password" id="key-inp" placeholder="sk-ant-... (Claude API 키 입력)">
+  <button onclick="saveKey()">저장</button>
+  <button onclick="clearKey()" style="color:var(--rd)">삭제</button>
+</div>
+<div class="key-st" id="key-st">API 키를 입력하세요</div>
+
+<!-- UPLOAD -->
+<div class="sec-label">SCREENSHOT</div>
+<div class="upload-wrap">
+  <label for="file-inp" class="drop-zone" id="drop-zone">
+    <input type="file" id="file-inp" accept="image/*" onchange="onFile(event)"
+      style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+    <div id="drop-content">
+      <div class="drop-icon">📸</div>
+      <div class="drop-txt">Polymarket 스크린샷을 업로드하세요<br><b>탭하여 선택</b></div>
+    </div>
+    <img id="preview-img" class="preview-img" style="display:none">
+  </label>
+</div>
+
+<!-- PROMPT -->
+<div class="sec-label">ANALYSIS PROMPT</div>
+<div class="prompt-wrap">
+  <textarea id="prompt-txt" rows="4" placeholder="분석 지시사항 (선택사항)
+
+기본값: EV 계산 + 켈리 기준 포지션 사이즈 + 추천 방향"></textarea>
+</div>
+
+<!-- ANALYZE -->
+<button class="btn-analyze" id="btn-ana" onclick="analyze()">ANALYZE</button>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="spin"></div>
+  <div class="load-txt" id="load-txt">Claude가 분석 중...</div>
+</div>
+
+<!-- RESULT -->
+<div class="result" id="result">
+  <div class="result-hdr">
+    <span>ANALYSIS RESULT</span>
+    <button class="copy-btn" onclick="copyResult()">복사</button>
+  </div>
+  <div class="result-body" id="result-body"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="hist-wrap" id="hist-wrap" style="display:none">
+  <div class="hist-hdr">
+    <span>HISTORY</span>
+    <button class="hist-clear" onclick="clearHistory()">전체 삭제</button>
+  </div>
+  <div class="hist-list" id="hist-list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let imgB64 = null;
+let imgMime = 'image/jpeg';
+const HIST_KEY = 'pm_hist';
+
+const DEFAULT_PROMPT = `이 Polymarket 마켓 스크린샷을 분석해주세요.
+
+다음 항목을 한국어로 분석해주세요:
+
+1. **마켓 개요** — 마켓명, 현재 Yes/No 가격, 마감일
+2. **EV 계산** — 현재 가격 기준 기대값(EV) 계산. Yes EV와 No EV 모두 계산
+3. **추천 방향** — YES / NO / 패스 중 하나와 이유
+4. **켈리 포지션 사이즈** — 켈리 기준 권장 비중 (예: 뱅크롤의 X%)
+5. **리스크 메모** — 주의사항 1~2줄
+
+형식: 간결하게, 핵심만, 숫자 중심으로`;
+
+// ── INIT ──
+window.onload = () => {
+  const key = localStorage.getItem('pm_key');
+  if (key) {
+    document.getElementById('key-inp').value = key;
+    updateKeyStatus(true);
+  }
+  const prompt = localStorage.getItem('pm_prompt');
+  if (prompt) document.getElementById('prompt-txt').value = prompt;
+  renderHistory();
+};
+
+// ── KEY ──
+function saveKey() {
+  const v = document.getElementById('key-inp').value.trim();
+  if (!v) { toast('API 키를 입력해주세요', 'var(--rd)'); return; }
+  localStorage.setItem('pm_key', v);
+  updateKeyStatus(true);
+  toast('API 키 저장됨', 'var(--gr)');
+}
+function clearKey() {
+  localStorage.removeItem('pm_key');
+  document.getElementById('key-inp').value = '';
+  updateKeyStatus(false);
+  toast('API 키 삭제됨', 'var(--yw)');
+}
+function updateKeyStatus(ok) {
+  document.getElementById('key-dot').style.color = ok ? 'var(--gr)' : 'var(--rd)';
+  document.getElementById('key-st').textContent = ok ? '✓ API 키 저장됨' : 'API 키를 입력하세요';
+  document.getElementById('key-st').style.color = ok ? 'var(--gr)' : 'var(--mu)';
+}
+
+// ── FILE ──
+function triggerFile() {
+  document.getElementById('file-inp').click();
+}
+function onFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  imgMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    imgB64 = dataUrl.split(',')[1];
+    // preview
+    const img = document.getElementById('preview-img');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('drop-content').style.display = 'none';
+    document.getElementById('drop-zone').classList.add('has-img');
+    toast('이미지 로드됨', 'var(--ac)');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── ANALYZE ──
+async function analyze() {
+  const key = localStorage.getItem('pm_key');
+  if (!key) { toast('API 키를 먼저 저장해주세요', 'var(--rd)'); return; }
+  if (!imgB64) { toast('스크린샷을 먼저 업로드해주세요', 'var(--rd)'); return; }
+
+  const userPrompt = document.getElementById('prompt-txt').value.trim() || DEFAULT_PROMPT;
+  localStorage.setItem('pm_prompt', userPrompt);
+
+  // UI
+  setLoading(true);
+  document.getElementById('result').classList.remove('show');
+
+  try {
+    const loadMsgs = [
+      'Claude가 분석 중...', '마켓 데이터 읽는 중...', 'EV 계산 중...', '포지션 사이즈 계산 중...'
+    ];
+    let li = 0;
+    const loadInterval = setInterval(() => {
+      document.getElementById('load-txt').textContent = loadMsgs[li++ % loadMsgs.length];
+    }, 1500);
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: imgMime, data: imgB64 }
+            },
+            { type: 'text', text: userPrompt }
+          ]
+        }]
+      })
+    });
+
+    clearInterval(loadInterval);
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '분석 결과를 가져올 수 없습니다.';
+
+    showResult(text);
+    saveHistory(text);
+
+  } catch (err) {
+    toast('오류: ' + err.message, 'var(--rd)');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── UI HELPERS ──
+function setLoading(on) {
+  document.getElementById('loading').classList.toggle('show', on);
+  document.getElementById('btn-ana').disabled = on;
+}
+
+function showResult(text) {
+  const body = document.getElementById('result-body');
+  // color EV mentions
+  const colored = text
+    .replace(/\+EV/g, '<span class="ev-pos">+EV</span>')
+    .replace(/-EV/g, '<span class="ev-neg">-EV</span>')
+    .replace(/YES/g, '<span class="ev-pos">YES</span>')
+    .replace(/NO\b/g, '<span class="ev-neg">NO</span>')
+    .replace(/패스/g, '<span class="ev-neu">패스</span>');
+  body.innerHTML = colored;
+  document.getElementById('result').classList.add('show');
+}
+
+function copyResult() {
+  const text = document.getElementById('result-body').innerText;
+  navigator.clipboard.writeText(text).then(() => toast('복사됨', 'var(--gr)'));
+}
+
+// ── HISTORY ──
+function saveHistory(text) {
+  const hist = getHistory();
+  hist.unshift({
+    id: Date.now(),
+    time: new Date().toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+    text: text,
+    preview: text.replace(/[#*]/g,'').substring(0,60)
+  });
+  const trimmed = hist.slice(0, 20);
+  localStorage.setItem(HIST_KEY, JSON.stringify(trimmed));
+  renderHistory();
+}
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return []; }
+}
+function clearHistory() {
+  localStorage.removeItem(HIST_KEY);
+  renderHistory();
+  toast('기록 삭제됨', 'var(--yw)');
+}
+function renderHistory() {
+  const hist = getHistory();
+  document.getElementById('hist-count').textContent = hist.length;
+  const wrap = document.getElementById('hist-wrap');
+  const list = document.getElementById('hist-list');
+
+  if (hist.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  list.innerHTML = hist.map(h => {
+    const hasPos = h.text.includes('+EV') || h.text.includes('YES');
+    const hasNeg = h.text.includes('-EV');
+    const evColor = hasPos ? 'var(--gr)' : hasNeg ? 'var(--rd)' : 'var(--yw)';
+    const evLabel = hasPos ? '+EV' : hasNeg ? '-EV' : 'PASS';
+    return `<div class="hist-item" onclick="loadHistory(${h.id})">
+      <div class="hist-item-top">
+        <span class="hist-item-time">${h.time}</span>
+        <span class="hist-item-ev" style="color:${evColor}">${evLabel}</span>
+      </div>
+      <div class="hist-item-txt">${h.preview}</div>
+    </div>`;
+  }).join('');
+}
+function loadHistory(id) {
+  const hist = getHistory();
+  const item = hist.find(h => h.id === id);
+  if (item) { showResult(item.text); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+// ── TOAST ──
+let toastTimer;
+function toast(msg, color='var(--ac)') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = color;
+  el.style.color = color;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE='polymaster-v1';
+    self.addEventListener('install',e=>{self.skipWaiting();});
+    self.addEventListener('fetch',e=>{
+      e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
+    });
+  `;
+  const blob = new Blob([swCode],{type:'text/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
