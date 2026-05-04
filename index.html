@@ -281,7 +281,7 @@ async function claude(messages,tools=[],max=1500){
   if(!key)throw new Error("API 키 없음 — 설정에서 입력");
   const body={model:"claude-opus-4-5",max_tokens:max,messages};
   if(tools.length)body.tools=tools;
-  const r=await fetch("https://autumn-poetry-2eb8.naegunpark.workers.dev",{
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},
     body:JSON.stringify(body)
   });
