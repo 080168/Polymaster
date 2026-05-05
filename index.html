@@ -293,11 +293,41 @@ async function claude(messages,tools=[],max=1500){
 }
 
 async function scanImage(b64,mime){
-  const sys=`Analyze this screenshot and respond ONLY with valid JSON (no markdown):
-{"market_name":"string","sport":"tennis|baseball|basketball|soccer|geopolitics|crypto|other","tennisone_data":"any TennisONE stats visible in screenshot","yes_price":number_or_null,"volume_24h":"string_or_null","live":bool,"player1":"string_or_null","player2":"string_or_null","score_p1":"string_or_null","score_p2":"string_or_null","set_score":"string_or_null","current_game":"string_or_null","tournament":"string_or_null","surface":"clay|hard|grass|null","round":"Final|SF|QF|R16|R32|null","win_prob_p1":number_or_null,"injury_info":"string_or_null","situation_ko":"2-3 Korean sentences","edge_ko":"1-2 Korean sentences","bayes_items":[{"label":"Korean","pT":number,"pF":number}],"recommended":"YES|NO|WAIT|SKIP","confidence":"HIGH|MEDIUM|LOW"}`;
-  const d=await claude([{role:"user",content:[{type:"image",source:{type:"base64",media_type:mime,data:b64}},{type:"text",text:"분석해주세요."}]}],[],1200);
-  const raw=d.content?.find(c=>c.type==="text")?.text||"{}";
-  try{return JSON.parse(raw.replace(/```json|```/g,"").trim())}catch{return null}
+  const key=getKey();
+  if(!key)throw new Error("API 키 없음");
+  const sys=`You are a Polymarket prediction market analyst. Analyze this screenshot and respond ONLY with valid JSON (no markdown, no explanation):
+{"market_name":"string or Unknown","sport":"tennis|basketball|soccer|crypto|other","yes_price":null,"volume_24h":null,"live":false,"player1":null,"player2":null,"score_p1":null,"score_p2":null,"set_score":null,"current_game":null,"tournament":null,"surface":null,"round":null,"win_prob_p1":null,"injury_info":null,"situation_ko":"이 스크린샷에 대한 간단한 설명","edge_ko":"베팅 기회 분석","bayes_items":[{"label":"상황 설명","pT":55,"pF":45}],"recommended":"WAIT","confidence":"LOW"}`;
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key":key,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({
+      model:"claude-opus-4-5",
+      max_tokens:1200,
+      system:sys,
+      messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:mime,data:b64}},
+        {type:"text",text:"이 스크린샷을 분석해주세요. 반드시 JSON만 응답하세요."}
+      ]}]
+    })
+  });
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  const allText=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+  if(!allText)throw new Error("AI 응답 없음 - 스크린샷을 다시 올려주세요");
+  const clean=allText.replace(/```json|```/g,"").trim();
+  // Try to extract JSON even if there's extra text
+  const jsonMatch=clean.match(/\{[\s\S]*\}/);
+  if(!jsonMatch)throw new Error("JSON 파싱 실패");
+  try{return JSON.parse(jsonMatch[0])}
+  catch(e){
+    // Return minimal valid object so analysis can still proceed
+    return {market_name:"Unknown",sport:"other",yes_price:null,situation_ko:"스크린샷 분석 완료",edge_ko:"수동으로 가격을 입력해주세요",bayes_items:[],recommended:"WAIT",confidence:"LOW"};
+  }
 }
 
 async function fetchOracle(query){
